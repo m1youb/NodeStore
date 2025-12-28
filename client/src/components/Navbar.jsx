@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { useAuthStore } from "../store/AuthStore";
 import { useCartStore } from "../store/CartStore";
 import { useTheme } from "../context/ThemeContext";
+import SearchBar from "./SearchBar";
 
 export default function Navbar() {
     const { isLoggingOut, logoutFunc, user } = useAuthStore();
@@ -12,24 +13,26 @@ export default function Navbar() {
 
     return (
         <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-6">
-            <nav className='glass-strong max-w-4xl w-full flex justify-between items-center px-8 py-3 transition-smooth' style={{ borderRadius: '50px' }}>
+            <nav className='glass-strong max-w-6xl w-full flex justify-between items-center px-8 py-3 transition-smooth' style={{ borderRadius: '50px' }}>
                 {/* Logo */}
                 <Link to="/">
                     <div className='flex items-center gap-3 group'>
-                        <div className='w-8 h-8 flex items-center justify-center' style={{
+                        <div className='w-8 h-8 flex items-center justify-center rounded-lg transition-colors' style={{
                             background: 'var(--color-accent)',
                             color: 'var(--color-bg)'
                         }}>
-                            <span className='font-bold text-sm mono'>CS</span>
+                            <ShoppingCartIcon className='w-5 h-5' />
                         </div>
                         <h2 className='font-bold text-lg tracking-tight mono transition-fast' style={{ color: 'var(--color-text-primary)' }}>
-                            CORE SYSTEMS
+                            GEAR STORE
                         </h2>
                     </div>
                 </Link>
 
-                {/* Spacer */}
-                <div className='flex-1'></div>
+                {/* Search Bar */}
+                <SearchBar />
+
+                {/* Spacer removed - search bar is now flex-1 */}
 
                 {/* Navigation Icons */}
                 <div className='flex items-center gap-2'>
@@ -69,34 +72,30 @@ export default function Navbar() {
                         </button>
                     </Link>
 
-                    {/* Cart */}
-                    {
-                        user && (
-                            <Link to='/cart'>
-                                <button
-                                    className="w-9 h-9 flex items-center justify-center transition-fast group relative"
-                                    style={{
-                                        border: `1px solid var(--color-border)`,
-                                        borderRadius: '50%'
-                                    }}
-                                    title="Cart"
-                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--color-border-hover)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--color-border)'}
-                                >
-                                    <ShoppingCartIcon className="w-4 h-4 transition-fast" style={{ color: 'var(--color-text-secondary)' }} />
-                                    {cartItems.length > 0 && (
-                                        <span className='absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold mono' style={{
-                                            background: 'var(--color-accent)',
-                                            color: 'var(--color-bg)',
-                                            borderRadius: '50%'
-                                        }}>
-                                            {cartItems.length}
-                                        </span>
-                                    )}
-                                </button>
-                            </Link>
-                        )
-                    }
+                    {/* Cart - Show only when there are items */}
+                    {cartItems.length > 0 && (
+                        <Link to='/cart'>
+                            <button
+                                className="w-9 h-9 flex items-center justify-center transition-fast group relative"
+                                style={{
+                                    border: `1px solid var(--color-border)`,
+                                    borderRadius: '50%'
+                                }}
+                                title="Cart"
+                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--color-border-hover)'}
+                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--color-border)'}
+                            >
+                                <ShoppingCartIcon className="w-4 h-4 transition-fast" style={{ color: 'var(--color-text-secondary)' }} />
+                                <span className='absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold mono' style={{
+                                    background: 'var(--color-accent)',
+                                    color: 'var(--color-bg)',
+                                    borderRadius: '50%'
+                                }}>
+                                    {cartItems.length}
+                                </span>
+                            </button>
+                        </Link>
+                    )}
 
                     {/* Divider */}
                     <div className='w-px h-6 mx-1' style={{ background: 'var(--color-border)' }}></div>

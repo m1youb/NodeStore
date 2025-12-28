@@ -10,6 +10,7 @@ import LoadingSpinner from "./components/LoadingSpinner"
 import Category from "./pages/Category"
 import NotFoundError from "./pages/NotFoundError"
 import Cart from "./pages/Cart"
+import Checkout from "./pages/Checkout"
 import { useCartStore } from "./store/CartStore"
 import PurchaseSuccess from "./pages/PurchaseSuccess"
 import PurchaseCancelled from "./pages/PurchaseCancelled"
@@ -21,11 +22,12 @@ import AdminLayout from "./components/AdminLayout"
 import AdminOverview from "./pages/admin/AdminOverview"
 import AdminUsers from "./pages/admin/AdminUsers"
 import AdminProducts from "./pages/admin/AdminProducts"
+import AdminOrders from "./pages/admin/AdminOrders"
 import AdminSettings from "./pages/admin/AdminSettings"
 
 function App() {
   const { isChecking, user, checkAuth } = useAuthStore();
-  const { cartItems, getCartItems } = useCartStore();
+  const { cartItems, getCartItems, syncCartToDatabase } = useCartStore();
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
@@ -33,8 +35,16 @@ function App() {
   }, [checkAuth])
 
   useEffect(() => {
-    getCartItems();
-  }, [getCartItems]);
+    getCartItems(user);
+  }, [getCartItems, user]);
+
+  // Sync guest cart to database after login
+  useEffect(() => {
+    if (user) {
+      syncCartToDatabase(user);
+    }
+  }, [user, syncCartToDatabase]);
+
   console.log(cartItems)
   if (isChecking) {
     return <LoadingSpinner />
@@ -51,7 +61,8 @@ function App() {
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />}></Route>
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" />}></Route>
             <Route path="/category/:category" element={<Category />}></Route>
-            <Route path="/cart" element={user ? <Cart /> : <Navigate to="/" />}></Route>
+            <Route path="/cart" element={<Cart />}></Route>
+            <Route path="/checkout" element={user ? <Checkout /> : <Navigate to="/signup" />}></Route>
             <Route path="/success" element={<PurchaseSuccess />}></Route>
             <Route path="/purchase-cancel" element={<PurchaseCancelled />}></Route>
 
@@ -62,6 +73,7 @@ function App() {
               <Route path="dashboard" element={<AdminOverview />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="orders" element={<AdminOrders />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

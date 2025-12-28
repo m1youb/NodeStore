@@ -51,8 +51,52 @@ class Product {
         return rows.map(Product.formatProduct);
     }
 
-    static async findByCategory(category) {
-        return await Product.findAll({ category });
+    static async findByCategory(category, filters = {}) {
+        const pool = getPool();
+        let query = 'SELECT * FROM products WHERE category = ?';
+        const params = [category];
+
+        // Apply price filters
+        if (filters.minPrice !== null && filters.minPrice !== undefined) {
+            query += ' AND price >= ?';
+            params.push(filters.minPrice);
+        }
+
+        if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+            query += ' AND price <= ?';
+            params.push(filters.maxPrice);
+        }
+
+        // Apply stock filter
+        if (filters.inStockOnly) {
+            query += ' AND stock_count > 0';
+        }
+
+        // Apply featured filter
+        if (filters.featuredOnly) {
+            query += ' AND is_featured = true';
+        }
+
+        // Apply sorting
+        switch (filters.sortBy) {
+            case 'price_asc':
+                query += ' ORDER BY price ASC';
+                break;
+            case 'price_desc':
+                query += ' ORDER BY price DESC';
+                break;
+            case 'popular':
+                // For now, sort by featured + newest. Can be enhanced with sales data later
+                query += ' ORDER BY is_featured DESC, created_at DESC';
+                break;
+            case 'newest':
+            default:
+                query += ' ORDER BY created_at DESC';
+                break;
+        }
+
+        const [rows] = await pool.query(query, params);
+        return rows.map(Product.formatProduct);
     }
 
     static async getFeaturedProducts() {
@@ -106,6 +150,29 @@ class Product {
             'SELECT * FROM products ORDER BY RAND() LIMIT ?',
             [limit]
         );
+        return rows.map(Product.formatProduct);
+    }
+
+    static async searchProducts(query, limit = 5) {
+        const pool = getPool();
+        const searchTerm = `%${query}%`;
+
+        const [rows] = await pool.query(
+            `SELECT * FROM products 
+             WHERE title LIKE ? 
+                OR description LIKE ? 
+                OR category LIKE ?
+             ORDER BY 
+                CASE 
+                    WHEN title LIKE ? THEN 1
+                    WHEN category LIKE ? THEN 2
+                    ELSE 3
+                END,
+                created_at DESC
+             LIMIT ?`,
+            [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, limit]
+        );
+
         return rows.map(Product.formatProduct);
     }
 

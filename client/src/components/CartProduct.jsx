@@ -1,9 +1,13 @@
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
+import { useAuthStore } from '../store/AuthStore'
 import { useCartStore } from '../store/CartStore'
 
 export default function CartProduct({ item }) {
+    const { user } = useAuthStore();
     const { updateQuantity, removeFromCart } = useCartStore();
+
+    const itemId = item.id || item._id;
 
     return (
         <div className='hardware-card p-4 flex items-center justify-between gap-4 w-full group'>
@@ -27,14 +31,14 @@ export default function CartProduct({ item }) {
                 {/* Quantity Controls */}
                 <div className='flex items-center bg-[#0a0a0a] border border-white/10 rounded-lg overflow-hidden'>
                     <button
-                        onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                        onClick={() => updateQuantity(itemId, item.quantity - 1, user)}
                         className='p-3 hover:bg-white/5 transition-colors text-gray-400 hover:text-white'
                     >
                         <Minus className="w-4 h-4" />
                     </button>
                     <span className='w-12 text-center font-mono text-sm'>{item.quantity}</span>
                     <button
-                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                        onClick={() => updateQuantity(itemId, item.quantity + 1, user)}
                         className='p-3 hover:bg-white/5 transition-colors text-gray-400 hover:text-white'
                     >
                         <Plus className="w-4 h-4" />
@@ -46,7 +50,7 @@ export default function CartProduct({ item }) {
                 </h2>
 
                 <button
-                    onClick={() => removeFromCart(item._id.toString())}
+                    onClick={() => removeFromCart(itemId, user)}
                     className='p-2 text-gray-500 hover:text-red-500 transition-colors'
                     title="Remove Item"
                 >

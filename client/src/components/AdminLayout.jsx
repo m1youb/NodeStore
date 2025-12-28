@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/AuthStore';
-import { LayoutDashboard, Users, Package, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Package, Settings, LogOut, ShoppingBag } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function AdminLayout() {
@@ -19,6 +19,7 @@ export default function AdminLayout() {
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
         { path: '/admin/users', icon: Users, label: 'Users' },
         { path: '/admin/products', icon: Package, label: 'Products' },
+        { path: '/admin/orders', icon: ShoppingBag, label: 'Orders' },
         { path: '/admin/settings', icon: Settings, label: 'Settings' }
     ];
 
@@ -36,13 +37,19 @@ export default function AdminLayout() {
             }}>
                 {/* Logo */}
                 <div className='p-6 border-b' style={{ borderColor: 'var(--border-primary)' }}>
-                    <Link to="/" className="block">
-                        <h1 className='mono text-xl font-bold hover:text-white transition-colors' style={{ color: 'var(--text-primary)' }}>
-                            CORE SYSTEMS
-                        </h1>
-                        <p className='text-xs mt-1 mono' style={{ color: 'var(--text-tertiary)' }}>
-                            ADMIN DASHBOARD
-                        </p>
+                    <Link to="/" className='flex items-center gap-3 group mb-8'>
+                        <div className='w-10 h-10 flex items-center justify-center rounded-lg transition-colors' style={{
+                            background: 'var(--color-accent)',
+                            color: 'var(--color-bg)'
+                        }}>
+                            <ShoppingBag className='w-6 h-6' />
+                        </div>
+                        <div>
+                            <h2 className='font-bold text-xl tracking-tight mono transition-fast' style={{ color: 'var(--color-text-primary)' }}>
+                                GEAR STORE
+                            </h2>
+                            <p className='text-xs' style={{ color: 'var(--color-text-secondary)' }}>Admin Panel</p>
+                        </div>
                     </Link>
                 </div>
 

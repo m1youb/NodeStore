@@ -4,14 +4,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import FeaturedProducts from '../components/FeaturedProducts';
 import AxiosInstance from '../utils/axios';
-import { LoaderCircle, ChevronRight } from 'lucide-react';
+import { LoaderCircle, ChevronRight, Plus } from 'lucide-react';
 import FeaturedProduct from '../components/FeaturedProduct';
 import toast from 'react-hot-toast';
+import FilterPanel from '../components/FilterPanel';
+import SortDropdown from '../components/SortDropdown';
+import { useAuthStore } from '../store/AuthStore';
+import { useAdminStore } from '../store/AdminStore';
+import CreateProductView from '../components/CreateProductView';
+import UpdateProductModal from '../components/UpdateProductModal';
 
 export default function Home() {
+    const { user } = useAuthStore();
+    const { deleteProductFunc } = useAdminStore();
+    const isAdmin = user?.role === 'admin';
+
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categoryProducts, setCategoryProducts] = useState([]);
     const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+    const [filters, setFilters] = useState({
+        minPrice: 0,
+        maxPrice: 5000,
+        inStockOnly: false,
+        featuredOnly: false
+    });
+    const [sortBy, setSortBy] = useState('newest');
+
+    // Admin state
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const handleCategoryClick = async (categoryTitle) => {
         if (selectedCategory === categoryTitle) {
@@ -20,9 +42,24 @@ export default function Home() {
         }
 
         setSelectedCategory(categoryTitle);
+        fetchCategoryProducts(categoryTitle, filters, sortBy);
+    };
+
+    const fetchCategoryProducts = async (category, currentFilters, currentSort) => {
         setIsLoadingCategory(true);
         try {
-            const res = await AxiosInstance.get(`/products/category/${categoryTitle}`);
+            // Build query params
+            const params = new URLSearchParams();
+            if (currentFilters.minPrice > 0) params.append('minPrice', currentFilters.minPrice);
+            if (currentFilters.maxPrice < 5000) params.append('maxPrice', currentFilters.maxPrice);
+            if (currentFilters.inStockOnly) params.append('inStockOnly', 'true');
+            if (currentFilters.featuredOnly) params.append('featuredOnly', 'true');
+            params.append('sortBy', currentSort);
+
+            const queryString = params.toString();
+            const url = `/products/category/${category}${queryString ? `?${queryString}` : ''}`;
+
+            const res = await AxiosInstance.get(url);
             setCategoryProducts(res.data.products || []);
         } catch (error) {
             console.error(error);
@@ -30,6 +67,69 @@ export default function Home() {
             setCategoryProducts([]);
         } finally {
             setIsLoadingCategory(false);
+        }
+    };
+
+    const handleFiltersChange = (newFilters) => {
+        setFilters(newFilters);
+        if (selectedCategory) {
+            fetchCategoryProducts(selectedCategory, newFilters, sortBy);
+        }
+    };
+
+    const handleSortChange = (newSort) => {
+        setSortBy(newSort);
+        if (selectedCategory) {
+            fetchCategoryProducts(selectedCategory, filters, newSort);
+        }
+    };
+
+    const handleResetFilters = () => {
+        const defaultFilters = {
+            minPrice: 0,
+            maxPrice: 5000,
+            inStockOnly: false,
+            featuredOnly: false
+        };
+        setFilters(defaultFilters);
+        setSortBy('newest');
+        if (selectedCategory) {
+            fetchCategoryProducts(selectedCategory, defaultFilters, 'newest');
+        }
+    };
+
+    // Admin handlers
+    const handleAddProduct = () => {
+        setShowCreateModal(true);
+    };
+
+    const handleEditProduct = (product) => {
+        setSelectedProduct(product);
+        setShowUpdateModal(true);
+    };
+
+    const handleDeleteProduct = async (product) => {
+        if (window.confirm(`Are you sure you want to delete "${product.title}"?`)) {
+            try {
+                await deleteProductFunc(product.id);
+                toast.success('Product deleted successfully');
+                // Refresh category products
+                if (selectedCategory) {
+                    fetchCategoryProducts(selectedCategory, filters, sortBy);
+                }
+            } catch (error) {
+                toast.error('Failed to delete product');
+            }
+        }
+    };
+
+    const handleProductSuccess = () => {
+        setShowCreateModal(false);
+        setShowUpdateModal(false);
+        setSelectedProduct(null);
+        // Refresh category products
+        if (selectedCategory) {
+            fetchCategoryProducts(selectedCategory, filters, sortBy);
         }
     };
 
@@ -97,9 +197,9 @@ export default function Home() {
                                         </motion.div>
                                     </div>
 
-                                    {/* Bento Grid */}
+                                    {/* Bento Grid - Only show first 5 categories */}
                                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16'>
-                                        {categories.map((ct, index) => (
+                                        {categories.slice(0, 5).map((ct, index) => (
                                             <motion.div
                                                 key={ct.title}
                                                 className={`hardware-card ${ct.wide ? 'md:col-span-2' : ''} group cursor-pointer`}
@@ -142,16 +242,42 @@ export default function Home() {
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.4 }}
                                 >
-                                    <div className="mb-8 flex items-center gap-4">
-                                        <button
-                                            onClick={() => setSelectedCategory(null)}
-                                            className="p-2 hover:bg-white/5 rounded-full transition-colors"
-                                        >
-                                            <ChevronRight className="w-5 h-5 rotate-180 text-gray-400" />
-                                        </button>
-                                        <h2 className="text-3xl font-bold text-white uppercase tracking-tight">
-                                            {selectedCategory}
-                                        </h2>
+                                    <div className="mb-8">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <button
+                                                onClick={() => setSelectedCategory(null)}
+                                                className="p-2 hover:bg-white/5 rounded-full transition-colors"
+                                            >
+                                                <ChevronRight className="w-5 h-5 rotate-180 text-gray-400" />
+                                            </button>
+                                            <h2 className="text-3xl font-bold text-white uppercase tracking-tight flex-1">
+                                                {selectedCategory}
+                                            </h2>
+                                        </div>
+
+                                        {/* Filter and Sort Toolbar */}
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="text-sm text-gray-500 font-mono">
+                                                {categoryProducts.length} {categoryProducts.length === 1 ? 'product' : 'products'} found
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={handleAddProduct}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-accent text-black font-bold rounded-lg hover:bg-accent/90 transition-colors"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                        <span className="text-sm">ADD PRODUCT</span>
+                                                    </button>
+                                                )}
+                                                <SortDropdown value={sortBy} onChange={handleSortChange} />
+                                                <FilterPanel
+                                                    filters={filters}
+                                                    onFiltersChange={handleFiltersChange}
+                                                    onReset={handleResetFilters}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {isLoadingCategory ? (
@@ -161,7 +287,13 @@ export default function Home() {
                                     ) : categoryProducts.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {categoryProducts.map(product => (
-                                                <FeaturedProduct key={product.id} product={product} />
+                                                <FeaturedProduct
+                                                    key={product.id}
+                                                    product={product}
+                                                    isAdmin={isAdmin}
+                                                    onEdit={handleEditProduct}
+                                                    onDelete={handleDeleteProduct}
+                                                />
                                             ))}
                                         </div>
                                     ) : (
@@ -175,6 +307,63 @@ export default function Home() {
                     </div>
                 </div>
             </div>
+
+            {/* Admin Modals */}
+            {isAdmin && showCreateModal && (
+                <div
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowCreateModal(false)}
+                >
+                    <div
+                        className="bg-[#0A0A0A] border border-[#222] rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-white mono tracking-tight">ADD NEW PRODUCT</h2>
+                            <button
+                                onClick={() => setShowCreateModal(false)}
+                                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <CreateProductView onSuccess={handleProductSuccess} />
+                    </div>
+                </div>
+            )}
+
+            {isAdmin && showUpdateModal && selectedProduct && (
+                <div
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    onClick={() => {
+                        setShowUpdateModal(false);
+                        setSelectedProduct(null);
+                    }}
+                >
+                    <div
+                        className="bg-[#0A0A0A] border border-[#222] rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-white mono tracking-tight">EDIT PRODUCT</h2>
+                            <button
+                                onClick={() => {
+                                    setShowUpdateModal(false);
+                                    setSelectedProduct(null);
+                                }}
+                                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <UpdateProductModal product={selectedProduct} onSuccess={handleProductSuccess} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

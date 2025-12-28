@@ -8,7 +8,8 @@ import {
     getProductsCategory,
     getSuggestions,
     updateProduct,
-    getById
+    getById,
+    searchProducts
 } from "../../controllers/products/product.controller.js";
 import { authCheck } from "../../middleware/authCheck.middleware.js";
 import { adminCheck } from "../../middleware/adminCheck.middleware.js";
@@ -24,6 +25,7 @@ productRoutes.delete("/delete/:id", authCheck, adminCheck, deleteProduct);
 //unauthorized
 productRoutes.get("/featured", getFeaturedProducts);
 productRoutes.get("/suggestions", getSuggestions);
+productRoutes.get("/search", searchProducts);
 productRoutes.get("/category/:category", getProductsCategory);
 productRoutes.get("/:id", getById);
 

@@ -165,7 +165,7 @@ export default function ProductDetails() {
                     </div>
 
                     <button
-                        onClick={() => addToCart(product)}
+                        onClick={() => addToCart(product, user)}
                         disabled={isAddingCart || product.stock_count === 0}
                         className="w-full py-4 bg-white text-black font-bold text-lg rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                     >

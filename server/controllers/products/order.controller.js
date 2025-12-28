@@ -153,3 +153,142 @@ export const sessionStatus = async function (req, res) {
         return res.status(500).json({ success: false, message: error.message });
     }
 }
+
+export const createCODOrder = async function (req, res) {
+    try {
+        const { products, shipping_address, city, country, postal_code, total_amount } = req.body;
+        const userId = req.user.id || req.user._id;
+
+        console.log('COD Order request:', { userId, products, shipping_address, city, country, postal_code, total_amount });
+
+        // Validation
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ success: false, message: "Cart is empty or invalid" });
+        }
+
+        if (!shipping_address || !city || !country || !postal_code) {
+            return res.status(400).json({ success: false, message: "All shipping details are required" });
+        }
+
+        if (!total_amount || total_amount <= 0) {
+            return res.status(400).json({ success: false, message: "Invalid total amount" });
+        }
+
+        // Create order
+        const newOrder = await Order.create({
+            user_id: userId,
+            products: products.map(p => ({
+                id: p.id || p._id,
+                quantity: p.quantity,
+                price: p.price
+            })),
+            total_amount: total_amount,
+            shipping_address,
+            city,
+            country,
+            postal_code,
+            payment_method: 'cash_on_delivery'
+        });
+
+        console.log('Order created:', newOrder);
+
+        // Decrement stock for each product
+        const [connection] = await pool.promise().query('SELECT 1');
+        for (const product of products) {
+            const productId = product.id || product._id;
+            const quantity = product.quantity;
+
+            try {
+                await pool.promise().query(
+                    'UPDATE products SET stock_count = stock_count - ? WHERE id = ? AND stock_count >= ?',
+                    [quantity, productId, quantity]
+                );
+                console.log(`Decremented stock for product ${productId} by ${quantity}`);
+            } catch (error) {
+                console.error(`Failed to decrement stock for product ${productId}:`, error);
+            }
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: "Order placed successfully! You will pay on delivery.",
+            order: newOrder
+        });
+    } catch (error) {
+        console.error('Create COD order error:', error);
+        dbLogger.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const getAllOrders = async function (req, res) {
+    try {
+        const orders = await Order.findAll();
+        return res.status(200).json({
+            success: true,
+            message: "Orders retrieved successfully",
+            orders
+        });
+    } catch (error) {
+        console.error('Get all orders error:', error);
+        dbLogger.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const updateOrderStatus = async function (req, res) {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ success: false, message: "Status is required" });
+        }
+
+        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" });
+        }
+
+        const updatedOrder = await Order.updateStatus(id, status);
+
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Order status updated successfully",
+            order: updatedOrder
+        });
+    } catch (error) {
+        console.error('Update order status error:', error);
+        dbLogger.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const deleteOrder = async function (req, res) {
+    try {
+        const orderId = req.params.id;
+
+        if (!orderId) {
+            return res.status(400).json({ success: false, message: "Order ID is required" });
+        }
+
+        const deleted = await Order.deleteById(orderId);
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Order deleted successfully"
+        });
+    } catch (error) {
+        console.error('Delete order error:', error);
+        dbLogger.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}

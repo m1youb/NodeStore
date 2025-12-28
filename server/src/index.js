@@ -22,6 +22,7 @@ import couponRoutes from '../routes/products/coupons.routes.js';
 import paymentRoutes from "../routes/products/order.routes.js";
 import analyticsRoutes from "../routes/products/analytics.routes.js";
 import reviewRoutes from "../routes/reviews/review.routes.js";
+import wishlistRoutes from '../routes/products/wishlist.routes.js';
 import adminRoutes from '../routes/admin/admin.routes.js';
 
 dotenv.config();
@@ -80,6 +81,7 @@ app.use("/mcollections/cart", cartRoutes);
 app.use("/mcollections/coupons", couponRoutes);
 app.use("/mcollections/payment", paymentRoutes);
 app.use("/mcollections/reviews", reviewRoutes);
+app.use("/mcollections/wishlist", wishlistRoutes);
 app.use("/mcollections/analytics", analyticsRoutes);
 app.use("/mcollections/admin", adminRoutes);
 

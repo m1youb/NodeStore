@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useCartStore } from '../store/CartStore'
+import { useAuthStore } from '../store/AuthStore'
+import { useNavigate } from 'react-router-dom'
 import { loadStripe } from "@stripe/stripe-js"
 import toast from 'react-hot-toast';
 import { X, CreditCard, Tag } from 'lucide-react';
@@ -8,27 +10,27 @@ import { motion } from 'framer-motion';
 const stripePromise = loadStripe("pk_test_51R80KDR6STGHtwUjjE1Z4cvCj1y2yFPQiuLtiihJXV1VrUdMzNmnXuDaSn6LG6MGIGjMXjrlzTJUv3sEy8BfsYrr00OHYV0jbs")
 
 export default function OrderSummary() {
+    const navigate = useNavigate();
+    const { user } = useAuthStore();
     const { calculateTotalAmount, totalAmount, subTotal, session, createSession, cartItems, coupon, isCouponApplied, getCoupon, applyCoupon, removeCoupon } = useCartStore();
     const [couponCode, setCouponCode] = useState('');
 
     const handlePayment = async function () {
-        const stripe = await stripePromise;
-
-        await createSession(cartItems, coupon);
-        const result = await stripe.redirectToCheckout({
-            sessionId: session
-        });
-        if (result.error) {
-            toast.error(result.error)
+        if (!user) {
+            // Redirect to signup if not logged in
+            navigate('/signup');
+            return;
         }
+        // Navigate to checkout page
+        navigate('/checkout');
     }
     useEffect(() => {
         calculateTotalAmount()
     }, [calculateTotalAmount])
 
-    useEffect(() => (
-        getCoupon()
-    ), [getCoupon])
+    useEffect(() => {
+        getCoupon(user);
+    }, [getCoupon, user])
 
     return (
         <div className='flex flex-col gap-6 w-full'>
@@ -67,7 +69,7 @@ export default function OrderSummary() {
                     onClick={handlePayment}
                     className='w-full py-4 bg-white text-black font-bold text-sm rounded-md hover:bg-gray-200 transition-colors tracking-wider flex items-center justify-center gap-2'
                 >
-                    PROCEED TO CHECKOUT
+                    {user ? 'PROCEED TO CHECKOUT' : 'LOGIN TO CHECKOUT'}
                 </button>
             </div>
 

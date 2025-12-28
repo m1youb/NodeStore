@@ -1,17 +1,18 @@
 import { getPool } from '../config/dbConnect.js';
 
 class Order {
-    static async create({ user_id, products, total_amount, stripe_session_id }) {
+    static async create({ user_id, products, total_amount, stripe_session_id, shipping_address, city, country, postal_code, payment_method = 'cash_on_delivery' }) {
         const pool = getPool();
         const connection = await pool.getConnection();
 
         try {
             await connection.beginTransaction();
 
-            // Create order
+            // Create order with shipping details
             const [orderResult] = await connection.query(
-                'INSERT INTO orders (user_id, total_amount, stripe_session_id) VALUES (?, ?, ?)',
-                [user_id, total_amount, stripe_session_id]
+                `INSERT INTO orders (user_id, total_amount, shipping_address, city, country, postal_code, payment_method, stripe_session_id, status) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+                [user_id, total_amount, shipping_address || null, city || null, country || null, postal_code || null, payment_method, stripe_session_id || null]
             );
 
             const orderId = orderResult.insertId;
@@ -69,6 +70,12 @@ class Order {
             })),
             totalamount: parseFloat(order.total_amount),
             total_amount: parseFloat(order.total_amount),
+            shipping_address: order.shipping_address,
+            city: order.city,
+            country: order.country,
+            postal_code: order.postal_code,
+            payment_method: order.payment_method,
+            status: order.status,
             stripeSessionId: order.stripe_session_id,
             stripe_session_id: order.stripe_session_id,
             createdAt: order.created_at,
@@ -103,6 +110,15 @@ class Order {
         }
 
         return ordersWithItems;
+    }
+
+    static async updateStatus(orderId, status) {
+        const pool = getPool();
+        await pool.query(
+            'UPDATE orders SET status = ? WHERE id = ?',
+            [status, orderId]
+        );
+        return await Order.findById(orderId);
     }
 
     static async deleteById(id) {

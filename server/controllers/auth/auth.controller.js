@@ -61,32 +61,43 @@ export const signUpController = async (req, res) => {
 export const loginController = async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log('Login attempt for username:', username);
         serverLogger.info("Login started");
         if (!username || !password) {
             return res.status(400).json({ success: false, message: "Fields shouldn't be empty" });
         }
 
         // Find user by username (MySQL method)
+        console.log('Searching for user in database...');
         const findUserName = await User.findByUsername(username);
+        console.log('User found:', findUserName ? 'Yes' : 'No');
         if (!findUserName) {
             return res.status(404).json({ success: false, message: "Invalid credentials" });
         }
 
         // Validate password (MySQL method)
+        console.log('Validating password...');
         const validPassword = await User.validatePassword(password, findUserName.password);
+        console.log('Password valid:', validPassword);
         if (!validPassword) {
             return res.status(404).json({ success: false, message: "Invalid Credentials" });
         }
 
+        console.log('Generating tokens...');
         const { accessToken, refreshToken } = generateToken(findUserName.id);
+        console.log('Storing refresh token...');
         await storeRefreshToken(findUserName.id, refreshToken);
+        console.log('Setting cookies...');
         exportCookies(res, accessToken, refreshToken);
 
         // Remove password from response
         delete findUserName.password;
 
+        console.log('Login successful for:', findUserName.username);
         return res.status(200).json({ success: true, message: `${findUserName.username} loggedin successfully`, user: findUserName })
     } catch (error) {
+        console.error('LOGIN ERROR:', error);
+        console.error('Error stack:', error.stack);
         return res.status(500).json({ success: false, message: error.message })
     }
 }

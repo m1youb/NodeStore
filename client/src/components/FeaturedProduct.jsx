@@ -1,12 +1,58 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../store/AuthStore'
 import { useCartStore } from '../store/CartStore'
-import { Plus } from 'lucide-react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
 
-export default function FeaturedProduct({ product }) {
+export default function FeaturedProduct({ product, isAdmin = false, onEdit, onDelete }) {
+    const { user } = useAuthStore();
     const { addToCart } = useCartStore()
+    const navigate = useNavigate();
+
+    const handleCardClick = () => {
+        navigate(`/product/${product.id}`);
+    };
+
+    const handleAddToCart = (e) => {
+        e.stopPropagation(); // Prevent card click when clicking button
+        addToCart(product, user);
+    };
+
+    const handleEdit = (e) => {
+        e.stopPropagation();
+        onEdit?.(product);
+    };
+
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete?.(product);
+    };
 
     return (
-        <div className='hardware-card group'>
+        <div
+            onClick={handleCardClick}
+            className='hardware-card group cursor-pointer hover:border-accent transition-all relative'
+        >
+            {/* Admin Controls Overlay */}
+            {isAdmin && (
+                <div className='absolute top-2 right-2 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+                    <button
+                        onClick={handleEdit}
+                        className='p-2 bg-blue-500/90 hover:bg-blue-500 text-white rounded-lg transition-colors shadow-lg'
+                        title="Edit Product"
+                    >
+                        <Edit2 className='w-4 h-4' />
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        className='p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors shadow-lg'
+                        title="Delete Product"
+                    >
+                        <Trash2 className='w-4 h-4' />
+                    </button>
+                </div>
+            )}
+
             {/* Status Badge */}
             <div className='status-badge'>
                 FEATURED
@@ -43,7 +89,7 @@ export default function FeaturedProduct({ product }) {
 
                 {/* Add to Cart Button */}
                 <button
-                    onClick={() => addToCart(product)}
+                    onClick={handleAddToCart}
                     className='w-full flex items-center justify-center gap-2 py-3 border border-[#222222] hover:border-[#00D9FF] hover:bg-[#00D9FF]/10 transition-fast group/btn'
                 >
                     <Plus className="w-4 h-4 text-[#B0B0B0] group-hover/btn:text-[#00D9FF] transition-fast" />

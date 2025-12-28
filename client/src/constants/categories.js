@@ -42,6 +42,90 @@ const categories = [
         specs: "Enterprise Security / vPro",
         status: "CERTIFIED"
     },
+    {
+        href: "/processors",
+        title: "Processors",
+        image: "/processor.jpg",
+        specs: "CPU / Chipsets",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/graphics-cards",
+        title: "Graphics Cards",
+        image: "/gpu.jpg",
+        specs: "GPU / Video Cards",
+        status: "IN STOCK"
+    },
+    {
+        href: "/memory",
+        title: "Memory",
+        image: "/ram.jpg",
+        specs: "RAM / DDR4 / DDR5",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/storage",
+        title: "Storage",
+        image: "/storage.jpg",
+        specs: "SSD / HDD / NVMe",
+        status: "IN STOCK"
+    },
+    {
+        href: "/motherboards",
+        title: "Motherboards",
+        image: "/motherboard.jpg",
+        specs: "ATX / mATX / ITX",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/cooling",
+        title: "Cooling",
+        image: "/cooling.jpg",
+        specs: "Air / AIO / Liquid",
+        status: "IN STOCK"
+    },
+    {
+        href: "/power-supply",
+        title: "Power Supply",
+        image: "/psu.jpg",
+        specs: "PSU / Modular",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/cases",
+        title: "Cases",
+        image: "/case.jpg",
+        specs: "Tower / Compact",
+        status: "IN STOCK"
+    },
+    {
+        href: "/peripherals",
+        title: "Peripherals",
+        image: "/peripherals.jpg",
+        specs: "Mouse / Keyboard / Headset",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/monitors",
+        title: "Monitors",
+        image: "/monitor.jpg",
+        specs: "4K / Gaming / Ultrawide",
+        status: "IN STOCK"
+    },
+    {
+        href: "/networking",
+        title: "Networking",
+        image: "/networking.jpg",
+        specs: "Router / WiFi / Ethernet",
+        status: "AVAILABLE"
+    },
+    {
+        href: "/accessories",
+        title: "Accessories",
+        image: "/accessories.jpg",
+        specs: "Cables / Adapters / Tools",
+        status: "IN STOCK"
+    },
 ];
 
 export default categories;

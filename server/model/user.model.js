@@ -77,7 +77,16 @@ class User {
         `, [userId]);
 
         return rows.map(row => ({
+            _id: row.product_id,
+            id: row.product_id,
             quantity: row.quantity,
+            title: row.title,
+            description: row.description,
+            image: row.image,
+            price: parseFloat(row.price),
+            category: row.category,
+            is_featured: row.is_featured,
+            // Keep nested product for backward compatibility
             product: {
                 id: row.product_id,
                 title: row.title,

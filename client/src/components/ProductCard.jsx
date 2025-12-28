@@ -1,5 +1,6 @@
 import { ShoppingCartIcon } from 'lucide-react'
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/AuthStore'
 import toast from 'react-hot-toast';
 import { useCartStore } from '../store/CartStore';
@@ -7,14 +8,15 @@ import { useCartStore } from '../store/CartStore';
 export default function ProductCard({ product }) {
   const { user } = useAuthStore();
   const { isLoading, addToCart } = useCartStore()
+  const navigate = useNavigate();
 
-  const handleAddCart = function () {
-    if (user) {
-      addToCart(product);
-    } else {
-      toast.error("Login or create an account first", { id: "login" });
-      return
-    }
+  const handleAddCart = function (e) {
+    e.stopPropagation(); // Prevent card click when clicking button
+    addToCart(product, user); // Pass user to cart store
+  }
+
+  const handleCardClick = () => {
+    navigate(`/product/${product.id}`);
   }
 
   const handleImageError = (e) => {
@@ -32,7 +34,10 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div className='card card-bordered w-[300px] h-[360px] bg-slate-900 rounded-lg mx-10'>
+    <div
+      onClick={handleCardClick}
+      className='card card-bordered w-[300px] h-[360px] bg-slate-900 rounded-lg mx-10 cursor-pointer hover:border-accent transition-all duration-300 hover:scale-105'
+    >
       <figure className='h-48 overflow-hidden'>
         <img
           src={product?.image}

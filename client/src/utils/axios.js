@@ -12,7 +12,10 @@ AxiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const request = error.config;
-        if (error.response?.status === 401 && !request._retry) {
+        const user = useAuthStore.getState().user;
+
+        // Only attempt token refresh if user is authenticated and we haven't retried yet
+        if (error.response?.status === 401 && !request._retry && user) {
             request._retry = true;
 
             try {
@@ -30,6 +33,8 @@ AxiosInstance.interceptors.response.use(
                 return Promise.reject(error)
             }
         }
+
+        // For guest users or non-401 errors, just reject
         return Promise.reject(error);
     }
 )

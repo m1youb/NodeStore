@@ -66,10 +66,33 @@ export const updateProduct = async function (req, res) {
             return res.status(404).json({ success: false, message: "No identifier was passed", product: null });
         }
 
-        if (image && !image.startsWith('http')) { // Only upload if it's base64/new
-            const uploaded = await cloudinary.uploader.upload(image, { folder: "products" });
-            image = uploaded.secure_url;
-            req.body.image = image; // Update image in body
+        // Validate image size if it's base64 (rough estimate: base64 is ~33% larger than binary)
+        if (image && !image.startsWith('http')) {
+            const imageSizeInBytes = (image.length * 3) / 4;
+            const maxSizeInBytes = 10 * 1024 * 1024; // 10MB limit
+
+            if (imageSizeInBytes > maxSizeInBytes) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Image size (${(imageSizeInBytes / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (10MB). Please compress the image.`
+                });
+            }
+
+            try {
+                const uploaded = await cloudinary.uploader.upload(image, {
+                    folder: "products",
+                    resource_type: "auto",
+                    timeout: 60000 // 60 second timeout
+                });
+                image = uploaded.secure_url;
+                req.body.image = image;
+            } catch (uploadError) {
+                console.error("Cloudinary upload error:", uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: `Image upload failed: ${uploadError.message || 'Unknown error'}`
+                });
+            }
         }
 
         const findUpdate = await Product.updateById(product, req.body);
@@ -79,7 +102,8 @@ export const updateProduct = async function (req, res) {
 
         return res.status(200).json({ success: true, message: "Product updated succesfully", product: findUpdate })
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error("Update product error:", error);
+        return res.status(500).json({ success: false, message: error.message || "An unexpected error occurred" });
     }
 }
 
@@ -173,11 +197,22 @@ export const getSuggestions = async function (req, res) {
 export const getProductsCategory = async function (req, res) {
     try {
         const { category } = req.params;
+        const { minPrice, maxPrice, inStockOnly, featuredOnly, sortBy } = req.query;
+
         if (!category) {
             return res.status(400).json({ success: false, message: "Couldn't get products, problem with catagory unprovided", products: null });
         }
 
-        const products = await Product.findByCategory(category);
+        const filters = {
+            category,
+            minPrice: minPrice ? parseFloat(minPrice) : null,
+            maxPrice: maxPrice ? parseFloat(maxPrice) : null,
+            inStockOnly: inStockOnly === 'true',
+            featuredOnly: featuredOnly === 'true',
+            sortBy: sortBy || 'newest'
+        };
+
+        const products = await Product.findByCategory(category, filters);
         if (!products) {
             return res.status(400).json({ success: false, message: "Couldn't get products", products: null });
         }
@@ -214,6 +249,28 @@ export const getById = async function (req, res) {
         return res.status(200).json({ success: true, message: "Product retrieved successfully", product });
     } catch (error) {
         dbLogger.info("Error: " + error.name + " was found at " + error.trace);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const searchProducts = async function (req, res) {
+    try {
+        const { q } = req.query;
+
+        if (!q || q.trim().length === 0) {
+            return res.status(200).json({ success: true, message: "No search query provided", products: [] });
+        }
+
+        const products = await Product.searchProducts(q.trim(), 5); // Limit to 5 for autocomplete
+
+        return res.status(200).json({
+            success: true,
+            message: "Search completed successfully",
+            products,
+            count: products.length
+        });
+    } catch (error) {
+        dbLogger.error("Search error: " + error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 }
