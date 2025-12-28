@@ -1,14 +1,17 @@
 import express from "express";
-import { 
-    createOne, 
+import {
+    createOne,
     deleteProduct,
-    featureProduct, 
+    featureProduct,
     getFeaturedProducts,
-    getProducts, 
-    getProductsCategory, 
-    getSuggestions, 
-    updateProduct } from "../../controllers/products/product.controller.js";
-import { authCheck, adminCheck } from "../../middleware/authCheck.middleware.js";
+    getProducts,
+    getProductsCategory,
+    getSuggestions,
+    updateProduct,
+    getById
+} from "../../controllers/products/product.controller.js";
+import { authCheck } from "../../middleware/authCheck.middleware.js";
+import { adminCheck } from "../../middleware/adminCheck.middleware.js";
 const productRoutes = express.Router();
 
 //authorized routes
@@ -22,5 +25,6 @@ productRoutes.delete("/delete/:id", authCheck, adminCheck, deleteProduct);
 productRoutes.get("/featured", getFeaturedProducts);
 productRoutes.get("/suggestions", getSuggestions);
 productRoutes.get("/category/:category", getProductsCategory);
+productRoutes.get("/:id", getById);
 
 export default productRoutes;

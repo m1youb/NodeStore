@@ -1,5 +1,6 @@
 import express from "express"
-import { adminCheck, authCheck } from "../../middleware/authCheck.middleware.js";
+import { authCheck } from "../../middleware/authCheck.middleware.js";
+import { adminCheck } from "../../middleware/adminCheck.middleware.js";
 import { getData } from "../../controllers/products/analytics.controller.js";
 const analyticsRoutes = express.Router();
 
