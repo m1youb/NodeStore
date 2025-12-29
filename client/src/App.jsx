@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
@@ -24,11 +24,17 @@ import AdminUsers from "./pages/admin/AdminUsers"
 import AdminProducts from "./pages/admin/AdminProducts"
 import AdminOrders from "./pages/admin/AdminOrders"
 import AdminSettings from "./pages/admin/AdminSettings"
+import MyOrders from "./pages/MyOrders"
+
 
 function App() {
   const { isChecking, user, checkAuth } = useAuthStore();
   const { cartItems, getCartItems, syncCartToDatabase } = useCartStore();
   const isAdmin = user?.role === "admin";
+  const location = useLocation();
+
+  // Check if we're on an admin route
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   useEffect(() => {
     checkAuth();
@@ -55,7 +61,8 @@ function App() {
       <GlobalLoadingBar />
       <main className="relative overflow-hidden min-h-screen">
         <div className="relative z-50 pt-20">
-          <Navbar />
+          {/* Only show Navbar if NOT on admin routes */}
+          {!isAdminRoute && <Navbar />}
           <Routes>
             <Route path="/" element={<Home />}></Route>
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />}></Route>
@@ -67,6 +74,7 @@ function App() {
             <Route path="/purchase-cancel" element={<PurchaseCancelled />}></Route>
 
             <Route path='/product/:id' element={<ProductDetails />} />
+            <Route path='/my-orders' element={user ? <MyOrders /> : <Navigate to="/login" />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={isAdmin ? <AdminLayout /> : <Navigate to="/" />}>

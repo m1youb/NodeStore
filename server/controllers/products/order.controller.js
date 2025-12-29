@@ -3,6 +3,7 @@ import { dbLogger } from "../../logs/database/database.js";
 import Coupon from "../../model/coupon.model.js";
 import dotenv from "dotenv"
 import Order from "../../model/order.model.js";
+import { getPool } from "../../config/dbConnect.js";
 dotenv.config();
 
 const createStripeCoupon = async function (percentage) {
@@ -193,13 +194,13 @@ export const createCODOrder = async function (req, res) {
         console.log('Order created:', newOrder);
 
         // Decrement stock for each product
-        const [connection] = await pool.promise().query('SELECT 1');
+        const pool = getPool();
         for (const product of products) {
             const productId = product.id || product._id;
             const quantity = product.quantity;
 
             try {
-                await pool.promise().query(
+                await pool.query(
                     'UPDATE products SET stock_count = stock_count - ? WHERE id = ? AND stock_count >= ?',
                     [quantity, productId, quantity]
                 );
@@ -263,6 +264,23 @@ export const updateOrderStatus = async function (req, res) {
         });
     } catch (error) {
         console.error('Update order status error:', error);
+        dbLogger.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const getUserOrders = async function (req, res) {
+    try {
+        const userId = req.user.id || req.user._id;
+        const orders = await Order.findByUserId(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Orders retrieved successfully",
+            orders
+        });
+    } catch (error) {
+        console.error('Get user orders error:', error);
         dbLogger.error(error);
         return res.status(500).json({ success: false, message: error.message });
     }

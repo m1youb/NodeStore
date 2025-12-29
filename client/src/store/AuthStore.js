@@ -15,7 +15,7 @@ export const useAuthStore = create((set, get) => ({
         set({ isSigningUp: true });
         try {
             const signUp = await AxiosInstance.post("/auth/signup", data);
-            toast.success("Welcome to MCollections " + data.fullname + " 🫡🫡");
+            toast.success("Welcome to MCollections " + data.fullname);
             set({ user: signUp.data.user });
         } catch (error) {
             toast.error(error.message);
@@ -27,7 +27,7 @@ export const useAuthStore = create((set, get) => ({
         set({ isLoggingIn: true });
         try {
             const login = await AxiosInstance.post("/auth/login", data);
-            toast.success(`Welcome back 🫡🫡`);
+            toast.success(`Welcome back`);
             set({ user: login.data.user });
         } catch (error) {
             toast.error(error.message);
@@ -39,7 +39,7 @@ export const useAuthStore = create((set, get) => ({
         set({ isLoggingOut: true });
         try {
             await AxiosInstance.post("/auth/logout");
-            toast.success("Don't forget to come back 😊😊");
+            toast.success("See you soon");
             set({ user: null });
         } catch (error) {
             toast.error(error.message);

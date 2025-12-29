@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Plus, Upload } from 'lucide-react';
 import AxiosInstance from '../../utils/axios';
 import toast from 'react-hot-toast';
+import categories from '../../constants/categories';
 
 export default function AdminProductForm({ product, onClose, onSuccess }) {
     const isEditing = !!product;
@@ -111,10 +112,11 @@ export default function AdminProductForm({ product, onClose, onSuccess }) {
                                 required
                             >
                                 <option value="">Select Category</option>
-                                <option value="Powerhouse">Powerhouse</option>
-                                <option value="Gaming">Gaming</option>
-                                <option value="Creator">Creator</option>
-                                <option value="Workstation">Workstation</option>
+                                {categories.map(cat => (
+                                    <option key={cat.title} value={cat.title}>
+                                        {cat.title}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

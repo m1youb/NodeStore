@@ -1,4 +1,4 @@
-import { HomeIcon, LoaderCircleIcon, LayoutDashboardIcon, LogInIcon, LogOutIcon, ShoppingCartIcon, UserPlusIcon, Sun, Moon } from "lucide-react"
+import { HomeIcon, LoaderCircleIcon, LayoutDashboardIcon, LogInIcon, LogOutIcon, ShoppingCartIcon, UserPlusIcon, Sun, Moon, Package } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useAuthStore } from "../store/AuthStore";
 import { useCartStore } from "../store/CartStore";
@@ -71,6 +71,24 @@ export default function Navbar() {
                             <HomeIcon className="w-4 h-4 transition-fast" style={{ color: 'var(--color-text-secondary)' }} />
                         </button>
                     </Link>
+
+                    {/* My Orders - Show only for logged-in users */}
+                    {user && (
+                        <Link to='/my-orders'>
+                            <button
+                                className="w-9 h-9 flex items-center justify-center transition-fast group"
+                                style={{
+                                    border: `1px solid var(--color-border)`,
+                                    borderRadius: '50%'
+                                }}
+                                title="My Orders"
+                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--color-border-hover)'}
+                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--color-border)'}
+                            >
+                                <Package className="w-4 h-4 transition-fast" style={{ color: 'var(--color-text-secondary)' }} />
+                            </button>
+                        </Link>
+                    )}
 
                     {/* Cart - Show only when there are items */}
                     {cartItems.length > 0 && (
